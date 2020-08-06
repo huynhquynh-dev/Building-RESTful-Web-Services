@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.huynhquynh.app.ws.exception.UserSeviceException;
 import com.huynhquynh.app.ws.ui.model.request.UpdateUserDetailsRequestModel;
 import com.huynhquynh.app.ws.ui.model.request.UserDetailsRequestModel;
 import com.huynhquynh.app.ws.ui.model.responce.UserRest;
@@ -40,6 +41,9 @@ public class UserController {
 //	Nếu định dạng muốn trả về là XML thì cài thêm dependencies json fommat xml từ maven
 	@GetMapping(path = "/{userId}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<UserRest> getUser(@PathVariable String userId) {
+		
+		if(true) throw new UserSeviceException("Lỗi ở đây");
+		
 		if (users.containsKey(userId)) {
 			return new ResponseEntity<>(users.get(userId), HttpStatus.OK);
 		} else {
@@ -63,7 +67,7 @@ public class UserController {
 		userRest.setFirstName(userDetails.getFirstName());
 		userRest.setLastName(userDetails.getLastName());
 		userRest.setPassword(userDetails.getPassword());
-		String userId = UUID.randomUUID().toString();
+		String userId = UUID.randomUUID().toString();		
 		userRest.setId(userId);
 		if (users == null) {
 			users = new HashMap<String, UserRest>();			
