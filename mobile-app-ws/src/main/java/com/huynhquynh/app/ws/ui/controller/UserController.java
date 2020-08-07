@@ -1,11 +1,11 @@
 package com.huynhquynh.app.ws.ui.controller;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,22 +19,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.huynhquynh.app.ws.exception.UserSeviceException;
 import com.huynhquynh.app.ws.ui.model.request.UpdateUserDetailsRequestModel;
 import com.huynhquynh.app.ws.ui.model.request.UserDetailsRequestModel;
 import com.huynhquynh.app.ws.ui.model.responce.UserRest;
+import com.huynhquynh.app.ws.usersevice.UserSevice;
 
 @RestController
 @RequestMapping("users")
 public class UserController {
 	
 	Map<String, UserRest> users;
+	
+	@Autowired
+	UserSevice userSevice;
 
 	@GetMapping()
-	public String getUsers(@RequestParam(value = "page", defaultValue = "1") int page,
-			@RequestParam(value = "limit", defaultValue = "50") int limit,
-			@RequestParam(value = "sort", defaultValue = "desc", required = false) String sort) {
-		return "page: " + page + " and limit: " + limit + " and sort: " + sort;
+	public ResponseEntity<List<UserRest>> getUsers( @RequestParam(value = "page", defaultValue = "1") int page,
+							@RequestParam(value = "limit", defaultValue = "50") int limit,
+							@RequestParam(value = "sort", defaultValue = "desc", required = false) String sort) {
+		
+		return new ResponseEntity<List<UserRest>>(userSevice.getUsers(page, limit, sort), HttpStatus.OK);
 	}
 
 //	Chấp nhận xử lý theo 2 dạng : XML và JSON
@@ -42,10 +46,10 @@ public class UserController {
 	@GetMapping(path = "/{userId}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<UserRest> getUser(@PathVariable String userId) {
 		
-		if(true) throw new UserSeviceException("Lỗi ở đây");
-		
-		if (users.containsKey(userId)) {
-			return new ResponseEntity<>(users.get(userId), HttpStatus.OK);
+//		if(true) throw new UserSeviceException("Lỗi ở đây");
+		UserRest userRest = userSevice.getUser(userId);
+		if (userRest != null) {
+			return new ResponseEntity<>(userRest, HttpStatus.OK);
 		} else {
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 		}
@@ -62,17 +66,8 @@ public class UserController {
 						MediaType.APPLICATION_JSON_VALUE 
 				})
 	public ResponseEntity<UserRest> createUser(@Valid @RequestBody UserDetailsRequestModel userDetails) {
-		UserRest userRest = new UserRest();
-		userRest.setEmail(userDetails.getEmail());
-		userRest.setFirstName(userDetails.getFirstName());
-		userRest.setLastName(userDetails.getLastName());
-		userRest.setPassword(userDetails.getPassword());
-		String userId = UUID.randomUUID().toString();		
-		userRest.setId(userId);
-		if (users == null) {
-			users = new HashMap<String, UserRest>();			
-		}
-		users.put(userId, userRest);
+		
+		UserRest userRest = userSevice.createUser(userDetails);
 		return new ResponseEntity<UserRest>(userRest, HttpStatus.OK);
 	}
 
@@ -86,16 +81,13 @@ public class UserController {
 						MediaType.APPLICATION_JSON_VALUE 
 				})
 	public UserRest updateUser(@PathVariable String userId, @Valid @RequestBody UpdateUserDetailsRequestModel updateUserDetails) {
-		UserRest userRest = users.get(userId);
-		userRest.setFirstName(updateUserDetails.getFirstName());
-		userRest.setLastName(updateUserDetails.getLastName());
-		users.put(userId, userRest);
-		return userRest;
+	
+		return userSevice.updateUser(userId, updateUserDetails);
 	}
 
 	@DeleteMapping(path = "/{userId}")
 	public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
-		users.remove(userId);
+		userSevice.deleteUser(userId);
 		return ResponseEntity.noContent().build();
 	}
 }
